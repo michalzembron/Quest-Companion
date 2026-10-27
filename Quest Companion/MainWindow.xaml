@@ -1400,7 +1400,7 @@
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Path Data="{StaticResource IconMetaLogo}" Fill="{DynamicResource MqdhMetaGreenBrush}" Width="20" Height="20" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                        <TextBlock Text="Quest Companion v1.3.0" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                        <TextBlock Text="Quest Companion v1.0.0" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
                                     </StackPanel>
                                     <TextBlock Text="Engineered for Meta Quest 2, Quest 3, and Quest Pro PCVR streaming" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="28,3,0,0" />
                                 </StackPanel>
