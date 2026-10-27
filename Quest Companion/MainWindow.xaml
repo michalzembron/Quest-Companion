@@ -1,0 +1,1460 @@
+<ui:FluentWindow x:Class="Quest_Companion.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
+        xmlns:vm="clr-namespace:Quest_Companion.ViewModels"
+        mc:Ignorable="d"
+        Title="Quest Companion"
+        Height="820"
+        Width="880"
+        WindowStartupLocation="CenterScreen"
+        WindowBackdropType="None"
+        Background="{DynamicResource MqdhWindowBgBrush}"
+        ExtendsContentIntoTitleBar="True"
+        ShowInTaskbar="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed"
+        RenderOptions.ClearTypeHint="Enabled"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+
+    <ui:FluentWindow.DataContext>
+        <vm:MainViewModel />
+    </ui:FluentWindow.DataContext>
+
+    <Grid RenderOptions.ClearTypeHint="Enabled" UseLayoutRounding="True" SnapsToDevicePixels="True" Background="{DynamicResource MqdhWindowBgBrush}">
+        <!-- SYSTEM TRAY ICON -->
+        <tb:TaskbarIcon
+            x:Name="MyTaskbarIcon"
+            DataContext="{Binding}"
+            ToolTipText="{Binding TrayToolTipText}"
+            TrayLeftMouseDown="TrayIcon_TrayLeftMouseDown">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu DataContext="{Binding}">
+                    <MenuItem Header="{Binding BatteryDisplay}" IsEnabled="False" FontWeight="Bold" />
+                    <Separator />
+                    <MenuItem Header="Restart OVR Service (Meta Link)" Command="{Binding RestartOvrServiceCommand}" />
+                    <MenuItem Header="Toggle Quest Link" Command="{Binding ToggleQuestLinkCommand}" IsEnabled="{Binding IsHeadsetConnected}" />
+                    <MenuItem Header="Toggle Proximity Bypass (Always Awake)" Command="{Binding ToggleProximitySensorCommand}" IsEnabled="{Binding IsHeadsetConnected}" />
+                    <Separator />
+                    <MenuItem Header="Switch Audio Output (PC ↔ Headset)" Command="{Binding ToggleAudioOutputCommand}" />
+                    <MenuItem Header="Switch Microphone (PC ↔ Headset)" Command="{Binding ToggleMicrophoneCommand}" />
+                    <Separator />
+                    <MenuItem Header="Reboot Headset" Command="{Binding RebootHeadsetCommand}" IsEnabled="{Binding IsHeadsetConnected}" />
+                    <MenuItem Header="Shut Down Headset" Command="{Binding ShutdownHeadsetCommand}" IsEnabled="{Binding IsHeadsetConnected}" />
+                    <Separator />
+                    <MenuItem Header="Open Quest Companion" Click="OpenWindowMenuItem_Click" FontWeight="SemiBold" />
+                    <MenuItem Header="Exit" Click="ExitMenuItem_Click" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+
+        <!-- MAIN LAYOUT: SIDEBAR + CONTENT -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="210" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT SIDEBAR NAVIGATION (META QUEST DEVELOPER HUB STYLE) -->
+            <Border
+                Grid.Column="0"
+                Background="{DynamicResource MqdhSidebarBgBrush}"
+                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                BorderThickness="0,0,1,0"
+                Padding="10,14,10,14">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- App Title / Brand with Meta Infinity Loop Logo -->
+                    <StackPanel Grid.Row="0" Margin="6,8,6,22">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Meta Infinity Loop Vector Icon -->
+                            <Path Data="{StaticResource IconMetaLogo}"
+                                  Fill="{DynamicResource MqdhMetaGreenBrush}"
+                                  Width="22" Height="22" Stretch="Uniform"
+                                  Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Quest Companion" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                <TextBlock Text="Meta Quest Hub" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,1,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Sidebar Navigation Items (Rounded Pill Highlight) -->
+                    <StackPanel Grid.Row="1">
+                        <!-- Headset Tab Button with TRUE Head Mounted Device (HMD) Icon -->
+                        <Button
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Height="38"
+                            Margin="0,0,0,4"
+                            Padding="12,0"
+                            BorderThickness="0"
+                            Background="{Binding SelectedTabIndex, Converter={StaticResource TabActiveBackgroundConverter}, ConverterParameter=0}"
+                            Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Meta Quest 3 HMD Visor Icon with 3 Camera Pods and Straps -->
+                                <Viewbox Width="22" Height="15" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <Grid Width="34" Height="22">
+                                        <!-- Left Strap -->
+                                        <Border HorizontalAlignment="Left" VerticalAlignment="Center" Width="3" Height="8" CornerRadius="1" Background="#6B7280" />
+                                        <!-- Right Strap -->
+                                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" Width="3" Height="8" CornerRadius="1" Background="#6B7280" />
+                                        <!-- Visor Body -->
+                                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="28" Height="20" CornerRadius="6" Background="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=0}">
+                                            <!-- Sleek Continuous Visor Glass Band -->
+                                            <Border Width="18" Height="6" CornerRadius="3" Background="#141517" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                    </Grid>
+                                </Viewbox>
+                                <TextBlock
+                                    Text="Headset"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center"
+                                    Foreground="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=0}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Quest Link Tab Button -->
+                        <Button
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="1"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Height="38"
+                            Margin="0,0,0,4"
+                            Padding="12,0"
+                            BorderThickness="0"
+                            Background="{Binding SelectedTabIndex, Converter={StaticResource TabActiveBackgroundConverter}, ConverterParameter=1}"
+                            Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconQuestLink}"
+                                      Fill="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=1}"
+                                      Width="18" Height="18" Stretch="Uniform"
+                                      Margin="0,0,12,0" VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="Quest Link"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center"
+                                    Foreground="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=1}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Audio Tab Button -->
+                        <Button
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="2"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Height="38"
+                            Margin="0,0,0,4"
+                            Padding="12,0"
+                            BorderThickness="0"
+                            Background="{Binding SelectedTabIndex, Converter={StaticResource TabActiveBackgroundConverter}, ConverterParameter=2}"
+                            Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconAudio}"
+                                      Fill="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=2}"
+                                      Width="18" Height="18" Stretch="Uniform"
+                                      Margin="0,0,12,0" VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="Audio"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center"
+                                    Foreground="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=2}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Sideload Tab Button -->
+                        <Button
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="3"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Height="38"
+                            Margin="0,0,0,4"
+                            Padding="12,0"
+                            BorderThickness="0"
+                            Background="{Binding SelectedTabIndex, Converter={StaticResource TabActiveBackgroundConverter}, ConverterParameter=3}"
+                            Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconSideload}"
+                                      Fill="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=3}"
+                                      Width="18" Height="18" Stretch="Uniform"
+                                      Margin="0,0,12,0" VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="Sideload &amp; APK"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center"
+                                    Foreground="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=3}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Settings Tab Button -->
+                        <Button
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="4"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Height="38"
+                            Margin="0,0,0,4"
+                            Padding="12,0"
+                            BorderThickness="0"
+                            Background="{Binding SelectedTabIndex, Converter={StaticResource TabActiveBackgroundConverter}, ConverterParameter=4}"
+                            Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconSettings}"
+                                      Fill="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=4}"
+                                      Width="18" Height="18" Stretch="Uniform"
+                                      Margin="0,0,12,0" VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="Tools &amp; Settings"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center"
+                                    Foreground="{Binding SelectedTabIndex, Converter={StaticResource TabActiveForegroundConverter}, ConverterParameter=4}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Bottom Sidebar Status Card -->
+                    <Border
+                        Grid.Row="2"
+                        Background="#1E2024"
+                        BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="10,8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="6" Height="6" Fill="{Binding BatteryPillForeground}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding HeadsetModel}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource MqdhTextPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding BatteryDisplay}" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="12,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- RIGHT CONTENT AREA -->
+            <Grid Grid.Column="1" Margin="22,12,22,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Top TitleBar with MQDH Dark Look -->
+                <ui:TitleBar
+                    Grid.Row="0"
+                    Title="Quest Companion"
+                    ShowMaximize="False"
+                    ShowMinimize="True"
+                    Margin="0,0,0,14" />
+
+                <!-- PAGES CONTAINER -->
+                <Grid Grid.Row="1">
+
+                    <!-- PAGE 0: HEADSET & POWER (MQDH DASHBOARD) -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=0}">
+                        <StackPanel>
+                            <!-- TOP MQDH "DEVICES" CARD -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <!-- Header Row: Title & Quick Header Icons -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Meta Quest 3 HMD Visor Icon (Large) -->
+                                        <Viewbox Width="44" Height="28" Margin="0,0,14,0" VerticalAlignment="Center">
+                                            <Grid Width="46" Height="28">
+                                                <!-- Left Strap -->
+                                                <Border HorizontalAlignment="Left" VerticalAlignment="Center" Width="4" Height="10" CornerRadius="1.5" Background="#8E8E93" />
+                                                <!-- Right Strap -->
+                                                <Border HorizontalAlignment="Right" VerticalAlignment="Center" Width="4" Height="10" CornerRadius="1.5" Background="#8E8E93" />
+                                                <!-- Visor Body -->
+                                                <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="38" Height="26" CornerRadius="7" Background="#FFFFFF">
+                                                    <!-- Sleek Continuous Visor Glass Band -->
+                                                    <Border Width="26" Height="8" CornerRadius="4" Background="#1F2937" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                            </Grid>
+                                        </Viewbox>
+
+                                        <!-- Device Details & Solid Connected Pill -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding HeadsetModel}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <!-- MQDH Solid Green Connected Badge -->
+                                                <Border
+                                                    Background="{Binding HeadsetConnectionBadgeBackground}"
+                                                    CornerRadius="10"
+                                                    Padding="10,3"
+                                                    VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        Text="{Binding HeadsetConnectionStatusText}"
+                                                        Foreground="{Binding HeadsetConnectionBadgeForeground}"
+                                                        FontWeight="Bold"
+                                                        FontSize="11" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding HeadsetSerial, StringFormat='Serial: {0}'}" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,3,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Top Right Action Icons: Refresh, Reboot, Power -->
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource MqdhIconButton}" Command="{Binding RefreshAllCommand}" ToolTip="Refresh Device State" Margin="0,0,4,0">
+                                                <Path Data="{StaticResource IconRefresh}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="15" Height="15" Stretch="Uniform" />
+                                            </Button>
+                                            <Button Style="{StaticResource MqdhIconButton}" Command="{Binding RebootHeadsetCommand}" IsEnabled="{Binding IsHeadsetConnected}" ToolTip="Reboot Headset" Margin="0,0,4,0">
+                                                <Path Data="{StaticResource IconReboot}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="15" Height="15" Stretch="Uniform" />
+                                            </Button>
+                                            <Button Style="{StaticResource MqdhIconButton}" Command="{Binding ShutdownHeadsetCommand}" IsEnabled="{Binding IsHeadsetConnected}" ToolTip="Power Off Headset">
+                                                <Path Data="{StaticResource IconPower}" Fill="#F87171" Width="15" Height="15" Stretch="Uniform" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Battery Progress Bar with Percentage Inside -->
+                                    <Grid Margin="0,4,0,8">
+                                        <ProgressBar
+                                            Value="{Binding BatteryLevel}"
+                                            Maximum="100"
+                                            Height="16"
+                                            Foreground="{DynamicResource MqdhMetaGreenBrush}"
+                                            Background="#141517"
+                                            BorderThickness="0" />
+                                        <TextBlock
+                                            Text="{Binding BatteryLevel, StringFormat='{}{0}%'}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
+                                            FontWeight="Bold"
+                                            Foreground="White" />
+                                    </Grid>
+
+                                    <!-- Battery Status & Wi-Fi IP Address Details -->
+                                    <Grid Margin="0,2,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Battery: " Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" />
+                                            <TextBlock Text="{Binding BatteryDetailedStatus}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="2,0,12,0" />
+                                            <TextBlock Text="Wi-Fi IP: " Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" />
+                                            <TextBlock Text="{Binding WifiIpAddress}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="2,0,0,0" />
+                                        </StackPanel>
+
+                                        <Button
+                                            Grid.Column="1"
+                                            Style="{StaticResource MqdhButton}"
+                                            Height="26"
+                                            Padding="10,0"
+                                            Command="{Binding CopyWifiIpCommand}"
+                                            IsEnabled="{Binding IsHeadsetConnected}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconCopy}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Copy IP" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- MQDH "DEVICE ACTIONS" GRID CARD -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Device actions" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="0,0,0,14" />
+
+                                    <!-- Clean 2-Column Grid Matching Meta Quest Developer Hub -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="12" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="12" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="12" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="12" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Action 1: Cast device -->
+                                        <Border Grid.Row="0" Grid.Column="0" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconCast}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Cast device" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Stream view to PC / browser" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Style="{StaticResource MqdhButton}" Height="28" Padding="12,0" Command="{Binding StartCastDeviceCommand}" IsEnabled="{Binding IsHeadsetConnected}">
+                                                    <TextBlock Text="Start casting" FontSize="11" VerticalAlignment="Center" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 2: Boundary (Guardian) Toggle -->
+                                        <Border Grid.Row="0" Grid.Column="2" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconBoundary}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Boundary" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="#71717A" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsBoundaryEnabled}" Value="True">
+                                                                            <Setter Property="Fill" Value="#22C55E" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                        <TextBlock FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="Paused (Disabled)" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsBoundaryEnabled}" Value="True">
+                                                                            <Setter Property="Text" Value="Enabled" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <ui:ToggleSwitch
+                                                    Grid.Column="2"
+                                                    Style="{StaticResource MqdhToggleSwitch}"
+                                                    IsChecked="{Binding IsBoundaryEnabled, Mode=OneWay}"
+                                                    Command="{Binding ToggleBoundaryCommand}"
+                                                    IsEnabled="{Binding IsHeadsetConnected}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 3: Proximity Sensor Toggle -->
+                                        <Border Grid.Row="2" Grid.Column="0" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconProximity}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Proximity Sensor" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="#71717A" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsProximityBypassed}" Value="True">
+                                                                            <Setter Property="Fill" Value="#22C55E" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                        <TextBlock FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="Normal (Sleeps)" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsProximityBypassed}" Value="True">
+                                                                            <Setter Property="Text" Value="Bypassed (Always On)" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <ui:ToggleSwitch
+                                                    Grid.Column="2"
+                                                    Style="{StaticResource MqdhToggleSwitch}"
+                                                    IsChecked="{Binding IsProximityBypassed, Mode=OneWay}"
+                                                    Command="{Binding ToggleProximitySensorCommand}"
+                                                    IsEnabled="{Binding IsHeadsetConnected}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 4: Stay Awake on USB Toggle -->
+                                        <Border Grid.Row="2" Grid.Column="2" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconUsb}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Stay Awake on USB" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="#71717A" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsStayAwakeUsbEnabled}" Value="True">
+                                                                            <Setter Property="Fill" Value="#22C55E" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                        <TextBlock FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="Off" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsStayAwakeUsbEnabled}" Value="True">
+                                                                            <Setter Property="Text" Value="Enabled" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <ui:ToggleSwitch
+                                                    Grid.Column="2"
+                                                    Style="{StaticResource MqdhToggleSwitch}"
+                                                    IsChecked="{Binding IsStayAwakeUsbEnabled, Mode=OneWay}"
+                                                    Command="{Binding ToggleStayAwakeUsbCommand}"
+                                                    IsEnabled="{Binding IsHeadsetConnected}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 5: Record Video -->
+                                        <Border Grid.Row="4" Grid.Column="0" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconVideo}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Record Video" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="#71717A" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsRecordingVideo}" Value="True">
+                                                                            <Setter Property="Fill" Value="#EF4444" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                        <TextBlock Text="{Binding RecordVideoStatusText}" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Style="{StaticResource MqdhButton}" Height="28" Padding="12,0" Command="{Binding ToggleRecordVideoCommand}" IsEnabled="{Binding IsHeadsetConnected}">
+                                                    <TextBlock Text="{Binding RecordVideoButtonText}" FontSize="11" VerticalAlignment="Center" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 6: Screenshot Capture -->
+                                        <Border Grid.Row="4" Grid.Column="2" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconCamera}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Screenshot" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Capture PNG to Desktop" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Style="{StaticResource MqdhButton}" Height="28" Padding="12,0" Command="{Binding TakeScreenshotCommand}" IsEnabled="{Binding IsHeadsetConnected}">
+                                                    <TextBlock Text="Capture" FontSize="11" VerticalAlignment="Center" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 7: Display Power (Wake / Sleep) -->
+                                        <Border Grid.Row="6" Grid.Column="0" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconSun}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Display State" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Screen Power Control" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Style="{StaticResource MqdhButton}" Height="28" Padding="10,0" Command="{Binding WakeDisplayCommand}" IsEnabled="{Binding IsHeadsetConnected}" Margin="0,0,4,0" ToolTip="Wake Display">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Path Data="{StaticResource IconSun}" Fill="White" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                                            <TextBlock Text="Wake" FontSize="11" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Style="{StaticResource MqdhButton}" Height="28" Padding="10,0" Command="{Binding SleepDisplayCommand}" IsEnabled="{Binding IsHeadsetConnected}" ToolTip="Sleep Display">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Path Data="{StaticResource IconMoon}" Fill="White" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                                            <TextBlock Text="Sleep" FontSize="11" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 8: ADB over Wi-Fi (Connect / Disconnect) -->
+                                        <Border Grid.Row="6" Grid.Column="2" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconWifi}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="ADB over Wi-Fi" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding WifiIpAddress, StringFormat='Port: 5555 ({0})'}" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Style="{StaticResource MqdhButton}" Height="28" Padding="10,0" Command="{Binding EnableWirelessAdbCommand}" IsEnabled="{Binding IsHeadsetConnected}" Margin="0,0,4,0">
+                                                        <TextBlock Text="Connect" FontSize="11" VerticalAlignment="Center" />
+                                                    </Button>
+                                                    <Button Style="{StaticResource MqdhButton}" Height="28" Padding="8,0" Command="{Binding DisconnectWirelessAdbCommand}">
+                                                        <TextBlock Text="Stop" FontSize="11" VerticalAlignment="Center" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 9: Clear Logcat Buffer -->
+                                        <Border Grid.Row="8" Grid.Column="0" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconTrash}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Logcat Buffer" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Clear device log buffer" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Style="{StaticResource MqdhButton}" Height="28" Padding="12,0" Command="{Binding ClearLogcatCommand}" IsEnabled="{Binding IsHeadsetConnected}">
+                                                    <TextBlock Text="Clear" FontSize="11" VerticalAlignment="Center" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action 10: Meta Developer Hub -->
+                                        <Border Grid.Row="8" Grid.Column="2" Background="#1E2025" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path Data="{StaticResource IconLaunch}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="Meta Developer Hub" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Launch MQDH desktop app" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Style="{StaticResource MqdhButton}" Height="28" Padding="12,0" Command="{Binding OpenDeveloperHubCommand}">
+                                                    <TextBlock Text="Open" FontSize="11" VerticalAlignment="Center" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- DISPLAY REFRESH RATE CARD (MQDH STYLE) -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Display Refresh Rate" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                            <TextBlock Text="Select display refresh rate for games and Link" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Active Refresh Rate Pill -->
+                                        <Border
+                                            Grid.Column="1"
+                                            Background="#163828"
+                                            BorderBrush="#226140"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            Padding="10,4"
+                                            VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" Fill="#4ADE80" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding CurrentRefreshRate, StringFormat='Active: {0} Hz'}" Foreground="#4ADE80" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Segmented 72/80/90/120 Hz Buttons -->
+                                    <UniformGrid Columns="4">
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="72 Hz"
+                                            Command="{Binding SetRefreshRateCommand}"
+                                            CommandParameter="72"
+                                            IsEnabled="{Binding IsHeadsetConnected}"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=72}"
+                                            BorderBrush="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=72}"
+                                            FontWeight="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=72}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="80 Hz"
+                                            Command="{Binding SetRefreshRateCommand}"
+                                            CommandParameter="80"
+                                            IsEnabled="{Binding IsHeadsetConnected}"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=80}"
+                                            BorderBrush="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=80}"
+                                            FontWeight="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=80}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="90 Hz"
+                                            Command="{Binding SetRefreshRateCommand}"
+                                            CommandParameter="90"
+                                            IsEnabled="{Binding IsHeadsetConnected}"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=90}"
+                                            BorderBrush="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=90}"
+                                            FontWeight="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=90}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="120 Hz"
+                                            Command="{Binding SetRefreshRateCommand}"
+                                            CommandParameter="120"
+                                            IsEnabled="{Binding IsHeadsetConnected}"
+                                            Background="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=120}"
+                                            BorderBrush="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=120}"
+                                            FontWeight="{Binding CurrentRefreshRate, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=120}" />
+                                    </UniformGrid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PAGE 1: QUEST LINK & BITRATE (MQDH LINK CARD) -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=1}">
+                        <StackPanel>
+                            <!-- MQDH "LINK" CARD -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Link" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="0,0,10,0" />
+                                            <!-- Status Pill (Connected or Idle) -->
+                                            <Border
+                                                Background="{Binding LinkPillBackground}"
+                                                BorderBrush="{Binding LinkPillBorder}"
+                                                BorderThickness="1"
+                                                CornerRadius="10"
+                                                Padding="10,3"
+                                                VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="6" Height="6" Fill="{Binding LinkPillForeground}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding LinkStatusText}" Foreground="{Binding LinkPillForeground}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <TextBlock Text="Device State: " FontSize="12" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                            <TextBlock Text="Ready" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="2,0,14,0" />
+                                            <TextBlock Text="Connection: " FontSize="12" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding LinkConnectionMode}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="2,0,0,0" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Single Smart Connect / Disconnect Action Button (White Primary Button) -->
+                                    <Button
+                                        Grid.Column="1"
+                                        Style="{StaticResource MqdhPrimaryButton}"
+                                        Command="{Binding ToggleQuestLinkCommand}"
+                                        IsEnabled="{Binding IsHeadsetConnected}"
+                                        Height="32"
+                                        Padding="16,0"
+                                        VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconQuestLink}" Fill="#111827" Width="14" Height="14" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding QuestLinkButtonText}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- PC META SERVICES & RUNTIME CARD -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="PC Meta Services &amp; Runtime" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="0,0,0,2" />
+                                    <TextBlock Text="Desktop background service and client for PCVR streaming" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,0,0,12" />
+
+                                    <!-- Row 1: System Service (OVRService) -->
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="System Service (OVRService):" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                        <Border
+                                            HorizontalAlignment="Right"
+                                            Background="{Binding OvrPillBackground}"
+                                            BorderBrush="{Binding OvrPillBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="10,3"
+                                            VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding OvrStatusText}" Foreground="{Binding OvrPillForeground}" FontWeight="SemiBold" FontSize="11" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Row 2: Meta Horizon Desktop Client -->
+                                    <Grid Margin="0,0,0,12">
+                                        <TextBlock Text="Meta Horizon Desktop Client:" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                        <Border
+                                            HorizontalAlignment="Right"
+                                            Background="{Binding MetaClientPillBackground}"
+                                            BorderBrush="{Binding MetaClientPillBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="10,3"
+                                            VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding MetaClientStatusText}" Foreground="{Binding MetaClientPillForeground}" FontWeight="SemiBold" FontSize="11" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Action Buttons: Restart OVR & Restart Client -->
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Style="{StaticResource MqdhButton}" Command="{Binding RestartOvrServiceCommand}" IsEnabled="{Binding CanRestart}" Height="32" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconRefresh}" Fill="White" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Restart OVRService (Admin)" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1" Style="{StaticResource MqdhButton}" Command="{Binding RestartMetaClientCommand}" Height="32" Margin="4,0,0,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconReboot}" Fill="White" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Restart Client.exe" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- App Launchers: MQDH & Horizon App -->
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Style="{StaticResource MqdhButton}" Command="{Binding OpenDeveloperHubCommand}" Height="32" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconLaunch}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Open Developer Hub (MQDH)" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1" Style="{StaticResource MqdhButton}" Command="{Binding OpenMetaHorizonLinkCommand}" Height="32" Margin="4,0,0,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconLaunch}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Open Meta Horizon App" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Full PCVR Restart Accent Button -->
+                                    <Button
+                                        Command="{Binding FullPcRestartCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        Height="36"
+                                        Background="{DynamicResource MqdhMetaGreenDarkBrush}"
+                                        BorderBrush="{DynamicResource MqdhMetaGreenBorderBrush}"
+                                        BorderThickness="1"
+                                        Cursor="Hand">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconRefresh}" Fill="#4ADE80" Width="14" Height="14" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="Full PCVR Restart (OVRService + Client)" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" Foreground="#4ADE80" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- LINK BITRATE OPTIMIZER CARD -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="Link Bitrate Optimizer" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                            <TextBlock Text="Encoder bitrate configured in Oculus registry" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <Border
+                                            Grid.Column="1"
+                                            Background="#163828"
+                                            BorderBrush="#226140"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="10,3"
+                                            VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding BitrateDisplay}" Foreground="#4ADE80" FontWeight="SemiBold" FontSize="11" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- USB 2.0 Warning Alert if detected -->
+                                    <Border
+                                        Background="#2B1D0F"
+                                        BorderBrush="#8A4A12"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="10,8"
+                                        Margin="0,0,0,10"
+                                        Visibility="{Binding HasLinkConnectionWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Path Data="{StaticResource IconWarning}" Fill="#F59E0B" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <TextBlock Grid.Column="1" Text="{Binding LinkConnectionWarning}" FontSize="11" Foreground="#FCD34D" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Auto-Detect Bitrate Button -->
+                                    <Button
+                                        Style="{StaticResource MqdhButton}"
+                                        Command="{Binding AutoDetectBitrateCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        Height="32"
+                                        Margin="0,0,0,10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconSparkle}" Fill="{DynamicResource MqdhMetaGreenBrush}" Width="15" Height="15" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="Auto-Detect Best Bitrate (USB 2.0 vs 3.0 vs AirLink)" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Bitrate Presets -->
+                                    <TextBlock Text="Bitrate Presets:" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" Margin="0,0,0,6" />
+                                    <UniformGrid Columns="5" Margin="0,0,0,10">
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="Default (0)"
+                                            Command="{Binding SetPresetBitrateCommand}"
+                                            CommandParameter="0"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=0}"
+                                            BorderBrush="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=0}"
+                                            FontWeight="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=0}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="100 Mbps"
+                                            Command="{Binding SetPresetBitrateCommand}"
+                                            CommandParameter="100"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=100}"
+                                            BorderBrush="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=100}"
+                                            FontWeight="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=100}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="150 Mbps"
+                                            Command="{Binding SetPresetBitrateCommand}"
+                                            CommandParameter="150"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=150}"
+                                            BorderBrush="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=150}"
+                                            FontWeight="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=150}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="350 Mbps"
+                                            Command="{Binding SetPresetBitrateCommand}"
+                                            CommandParameter="350"
+                                            Margin="0,0,4,0"
+                                            Background="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=350}"
+                                            BorderBrush="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=350}"
+                                            FontWeight="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=350}" />
+                                        <Button
+                                            Style="{StaticResource MqdhButton}"
+                                            Content="500 Mbps"
+                                            Command="{Binding SetPresetBitrateCommand}"
+                                            CommandParameter="500"
+                                            Background="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBackgroundConverter}, ConverterParameter=500}"
+                                            BorderBrush="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToBorderConverter}, ConverterParameter=500}"
+                                            FontWeight="{Binding CurrentBitrateMbps, Converter={StaticResource IntMatchToFontWeightConverter}, ConverterParameter=500}" />
+                                    </UniformGrid>
+
+                                    <!-- Custom Bitrate Input -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBox
+                                            Text="{Binding CustomBitrateText, UpdateSourceTrigger=PropertyChanged}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0"
+                                            Height="30"
+                                            Padding="8,4"
+                                            Background="#141517"
+                                            Foreground="White"
+                                            BorderBrush="{DynamicResource MqdhCardBorderBrush}" />
+
+                                        <Button
+                                            Grid.Column="1"
+                                            Style="{StaticResource MqdhButton}"
+                                            Height="30"
+                                            Padding="14,0"
+                                            Content="Apply Custom (Mbps)"
+                                            Command="{Binding ApplyCustomBitrateCommand}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PAGE 2: AUDIO & MICROPHONE -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=2}">
+                        <StackPanel>
+                            <!-- Audio Playback Card -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="Audio Output (Speakers / Headphones)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                            <TextBlock Text="Default Windows audio playback endpoint" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <Border
+                                            Grid.Column="1"
+                                            Background="{Binding AudioOutputPillBackground}"
+                                            BorderBrush="{Binding AudioOutputPillBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="10,3"
+                                            VerticalAlignment="Center">
+                                            <TextBlock Foreground="{Binding AudioOutputPillForeground}" FontWeight="SemiBold" FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="PC Speakers" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsQuestAudioOutput}" Value="True">
+                                                                <Setter Property="Text" Value="Quest Headset" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Background="#1E2024" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Text="Active Playback Endpoint:" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding CurrentAudioOutputName}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Button
+                                        Style="{StaticResource MqdhButton}"
+                                        Command="{Binding ToggleAudioOutputCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        Height="34">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconAudio}" Fill="White" Width="15" Height="15" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="Switch Output (PC ↔ Quest Headset)" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Microphone Recording Card -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="Microphone (Recording Input)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                            <TextBlock Text="Default Windows audio recording endpoint" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <Border
+                                            Grid.Column="1"
+                                            Background="{Binding MicPillBackground}"
+                                            BorderBrush="{Binding MicPillBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="10,3"
+                                            VerticalAlignment="Center">
+                                            <TextBlock Foreground="{Binding MicPillForeground}" FontWeight="SemiBold" FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="PC Microphone" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsQuestMicrophone}" Value="True">
+                                                                <Setter Property="Text" Value="Quest Microphone" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Background="#1E2024" BorderBrush="{DynamicResource MqdhCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Text="Active Recording Microphone:" FontSize="11" Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding CurrentMicrophoneName}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Button
+                                        Style="{StaticResource MqdhButton}"
+                                        Command="{Binding ToggleMicrophoneCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        Height="34">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconMicrophone}" Fill="White" Width="15" Height="15" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="Switch Microphone (PC ↔ Quest Headset)" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PAGE 3: SIDELOAD & APK / OBB -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=3}">
+                        <StackPanel>
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Sideload Games &amp; Applications" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" Margin="0,0,0,2" />
+                                    <TextBlock Text="Install .apk packages, .obb expansion data, and full game folders" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,0,0,12" />
+
+                                    <!-- Drop Zone -->
+                                    <Border
+                                        x:Name="DropZone"
+                                        BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                        BorderThickness="2"
+                                        CornerRadius="8"
+                                        Background="#181A1D"
+                                        Padding="24"
+                                        AllowDrop="True"
+                                        DragOver="DropZone_DragOver"
+                                        Drop="DropZone_Drop"
+                                        Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <Path Data="{StaticResource IconSideload}" Fill="{DynamicResource MqdhMetaGreenBrush}" Width="36" Height="36" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                                            <TextBlock Text="Drag &amp; drop .apk, .obb, or folder here" FontWeight="SemiBold" FontSize="13" Foreground="White" HorizontalAlignment="Center" />
+                                            <TextBlock Text="OBB files are automatically installed into /sdcard/Android/obb/" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0" />
+
+                                            <Border
+                                                Visibility="{Binding HasSelectedInstallItem, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Background="#222429"
+                                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="10,6"
+                                                Margin="0,12,0,0">
+                                                <TextBlock
+                                                    Text="{Binding InstallItemDescription}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    MaxWidth="400"
+                                                    FontSize="11"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{DynamicResource MqdhMetaGreenBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ProgressBar
+                                        IsIndeterminate="True"
+                                        Height="4"
+                                        Margin="0,10,0,0"
+                                        Foreground="{DynamicResource MqdhMetaGreenBrush}"
+                                        Background="#141517"
+                                        Visibility="{Binding IsInstalling, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                                    <Button
+                                        Style="{StaticResource MqdhPrimaryButton}"
+                                        Margin="0,12,0,0"
+                                        Height="34"
+                                        Command="{Binding InstallSelectedPackageCommand}"
+                                        IsEnabled="{Binding HasSelectedInstallItem}"
+                                        HorizontalAlignment="Stretch"
+                                        Visibility="{Binding HasSelectedInstallItem, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconSideload}" Fill="#111827" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="Install Selected Package" VerticalAlignment="Center" FontWeight="Bold" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PAGE 4: TOOLS & SETTINGS -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter=4}">
+                        <StackPanel>
+                            <!-- System Settings -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Start with Windows" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                        <TextBlock Text="Launches quietly into the Windows system tray on startup" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                    </StackPanel>
+
+                                    <ui:ToggleSwitch
+                                        Grid.Column="1"
+                                        Style="{StaticResource MqdhToggleSwitch}"
+                                        IsChecked="{Binding IsAutoStartEnabled, Mode=OneWay}"
+                                        Command="{Binding ToggleAutoStartCommand}"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- About Card -->
+                            <Border
+                                Background="{DynamicResource MqdhCardBgBrush}"
+                                BorderBrush="{DynamicResource MqdhCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource IconMetaLogo}" Fill="{DynamicResource MqdhMetaGreenBrush}" Width="20" Height="20" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Quest Companion v1.3.0" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MqdhTextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="Engineered for Meta Quest 2, Quest 3, and Quest Pro PCVR streaming" Foreground="{DynamicResource MqdhTextSecondaryBrush}" FontSize="11" Margin="28,3,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                </Grid>
+
+                <!-- BOTTOM STATUS BAR (MQDH STYLE) -->
+                <Grid Grid.Row="2" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path Data="{StaticResource IconInfo}"
+                              Fill="{DynamicResource MqdhMetaGreenBrush}"
+                              Width="15" Height="15" Stretch="Uniform"
+                              Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock
+                            Text="{Binding StatusMessage}"
+                            TextTrimming="CharacterEllipsis"
+                            MaxWidth="340"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="{DynamicResource MqdhTextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <Button
+                        Grid.Column="1"
+                        Style="{StaticResource MqdhButton}"
+                        Command="{Binding RefreshAllCommand}"
+                        Height="28"
+                        Margin="0,0,8,0"
+                        Padding="10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IconRefresh}" Fill="{DynamicResource MqdhTextSecondaryBrush}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Refresh" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        Grid.Column="2"
+                        Style="{StaticResource MqdhButton}"
+                        Height="28"
+                        Padding="12,0"
+                        Content="Hide to Tray"
+                        FontSize="11"
+                        Command="{Binding ToggleWindowCommand}" />
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

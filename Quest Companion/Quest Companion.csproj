@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <RootNamespace>Quest_Companion</RootNamespace>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+        <Product>Quest Companion</Product>
+        <Description>A modern, lightweight Windows system tray utility for Meta Quest headsets (Quest 2, Quest 3, Quest Pro) and PCVR streaming.</Description>
+        <Authors>Quest Companion</Authors>
+        <Company>Quest Companion</Company>
+        <Copyright>Copyright © 2026</Copyright>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Resource Include="Assets\app.ico" />
+      <Resource Include="Assets\tray_connected.ico" />
+      <Resource Include="Assets\tray_disconnected.ico" />
+      <Resource Include="Assets\Fonts\MaterialIcons-Regular.ttf" />
+    </ItemGroup>
+
+    <!-- Automatically close running instance of Quest Companion before building to prevent file lock errors -->
+    <Target Name="KillRunningAppBeforeBuild" BeforeTargets="BeforeBuild">
+      <Exec Command="powershell -Command &quot;Stop-Process -Name 'Quest Companion' -Force -ErrorAction SilentlyContinue&quot;" ContinueOnError="true" IgnoreExitCode="true" />
+    </Target>
+
+    <ItemGroup>
+      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+      <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+      <PackageReference Include="NAudio.Wasapi" Version="3.3.0" />
+      <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.14" />
+      <PackageReference Include="WPF-UI" Version="4.3.0" />
+    </ItemGroup>
+
+</Project>
