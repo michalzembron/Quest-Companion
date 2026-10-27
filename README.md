@@ -87,7 +87,7 @@ Visit the [**Releases**](https://github.com/Michal/Quest-Companion/releases) pag
 ### Build & Run
 ```powershell
 # Clone the repository
-git clone https://github.com/michalzembron/Quest-Companion
+git clone https://github.com/michalzembron/Quest-Companion.git
 cd Quest-Companion
 
 # Build and run
